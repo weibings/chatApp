@@ -11,14 +11,43 @@ const $messages = document.querySelector("#messages");
 //Templates
 const messageTemplate = document.querySelector("#message-template").innerHTML;
 const locationTemplate = document.querySelector("#location-template").innerHTML;
+const sidebarTemplate = document.querySelector("#sidebar-template").innerHTML;
 
+
+//Options
+const {username, room} = Qs.parse(location.search, {ignoreQueryPrefix: true});
+
+const autoscroll = ()=>{
+    // new message element
+    $newMessage = $messages.lastElementChild;
+
+    //height of the new message
+    const newMessageStyles = getComputedStyle($newMessage);
+    const newMessageMargin = parseInt(newMessageStyles.marginBottom);
+    const newMessageHeight = $newMessage.offsetHeight + newMessageMargin;
+
+    //visible height
+    const visibleHeight = $messages.offsetHeight;
+
+    //height of message container
+    const containerHeight = $messages.scrollHeight;
+
+    //how far have I scrolled
+    const scrollOffset = $messages.scrollTop + visibleHeight;
+
+    if(containerHeight - newMessageHeight <= scrollOffset){
+        $messages.scrollTop = $messages.scrollHeight;
+    }
+}
 socket.on("message", (message)=>{
     console.log(message);
     const html = Mustache.render(messageTemplate, {
+        username: message.username.charAt(0).toUpperCase() + message.username.slice(1),
         message: message.text,
         createdAt: moment(message.createdAt).format("h:mm a"),
     });
     $messages.insertAdjacentHTML('beforeend', html);
+    autoscroll();
     
 })
 
@@ -26,12 +55,22 @@ socket.on("send", (data)=>{
     console.log(data);
 })
 
-socket.on("locationMessage", (url) => {
-    console.log(url);
+socket.on("locationMessage", (message) => {
+    console.log(message);
     const html = Mustache.render(locationTemplate, {
-        url: url.url,
-        createdAt: moment(url.createdAt).format("h:mm a"),});
+        username: message.username.charAt(0).toUpperCase() + message.username.slice(1),
+        url: message.url,
+        createdAt: moment(message.createdAt).format("h:mm a"),});
     $messages.insertAdjacentHTML('beforeend', html);
+    autoscroll();
+})
+
+socket.on('roomDate', ({room, users})=>{
+    const html = Mustache.render(sidebarTemplate, {
+        room,
+        users,
+    })
+    document.querySelector("#sidebar").innerHTML = html
 })
 
 $messageForm.addEventListener("submit", (e) =>{
@@ -63,3 +102,10 @@ $locationButton.addEventListener('click', () =>{
         })
     })
 })
+
+socket.emit('join', {username, room}, (error)=>{
+    // req.flash(error);
+    // req.redirect("back");
+    alert(error);
+    location.href = "/";
+});
