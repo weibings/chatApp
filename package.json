@@ -20,7 +20,7 @@
   "homepage": "https://github.com/weibings/chatApp#readme",
   "dependencies": {
     "bad-words": "^3.0.3",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "flash": "^1.1.0",
     "moment": "^2.26.0",
     "nodemon": "^2.0.4",
